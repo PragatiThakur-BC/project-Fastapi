@@ -25,12 +25,6 @@ except Exception as error:
     print("Error: ", error)
 
 
-# Since we are not using database to assign an id we will have to use random package
-my_posts = [{"id": 1, "title": "title of post1", "content": "content of post1"},
-            {"id": 2, "title": "A world of Coffee's",
-             "content": "Different flavoured Coffee's with different methods to make them."}]
-
-
 @app.get("/")
 async def root():
     return {"message": "API Project with FREECODECAMP"}

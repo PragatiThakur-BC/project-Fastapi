@@ -4,21 +4,19 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import List
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/posts",
+    tags=['Posts']
+)
 
 
-@router.get("/")
-async def root():
-    return {"message": "API Project with FREECODECAMP"}
-
-
-@router.get("/posts", response_model=List[schema.PostResponse])
+@router.get("/", response_model=List[schema.PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
 
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schema.PostResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.PostResponse)
 def create_post(post: schema.PostCreate, db: Session = Depends(get_db)):
     # new_post = models.Post(title=post.title, content=post.content, published=post.published)
     # the above code will be difficult to use if we have more in number of fields, so we will unpack the Post
@@ -30,7 +28,7 @@ def create_post(post: schema.PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@router.get("/posts/{id}", response_model=schema.PostResponse)
+@router.get("/{id}", response_model=schema.PostResponse)
 def get_post(id: int, db: Session = Depends(get_db)):
     return_post = db.query(models.Post).filter(models.Post.id == id).first()
     if not return_post:
@@ -39,7 +37,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
     return return_post
 
 
-@router.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_posts(id: int, db: Session = Depends(get_db)):
     deleted_post = db.query(models.Post).filter(models.Post.id == id).first()
     if deleted_post is None:
@@ -51,7 +49,7 @@ def delete_posts(id: int, db: Session = Depends(get_db)):
 
 
 # updating all the details of posts
-@router.put("/posts/{id}", response_model=schema.PostResponse)
+@router.put("/{id}", response_model=schema.PostResponse)
 def update_post(id: int, post: schema.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     query_data = post_query.first()

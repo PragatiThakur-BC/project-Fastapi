@@ -11,23 +11,25 @@ class PostBase(BaseModel):
     published: bool = True
 
 
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    created_at: datetime
+
+
 class PostCreate(PostBase):
     pass
 
 
 class PostResponse(PostBase):
     created_at: datetime
+    owner_id: int
+    owner: UserOut
 
 
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
-
-
-class UserOut(BaseModel):
-    id: int
-    email: EmailStr
-    created_at: datetime
 
 
 class UserLogin(BaseModel):

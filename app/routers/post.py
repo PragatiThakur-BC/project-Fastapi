@@ -24,7 +24,7 @@ def create_post(post: schema.PostCreate, db: Session = Depends(get_db),
     # the above code will be difficult to use if we have more in number of fields, so we will unpack the Post
     # schema using model_dump
     print(current_user.email)
-    new_post = models.Post(**post.model_dump())
+    new_post = models.Post(owner_id=current_user.id, **post.model_dump())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -37,17 +37,25 @@ def get_post(id: int, db: Session = Depends(get_db), current_user: int = Depends
     if not return_post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with {id} not found")
+    if return_post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Not authorised to perform such operation")
     return return_post
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_posts(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    deleted_post = db.query(models.Post).filter(models.Post.id == id).first()
+    deleted_query = db.query(models.Post).filter(models.Post.id == id)
+    deleted_post = deleted_query.first()
     if deleted_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id:{id} does not exist")
-    db.delete(deleted_post)
+    if deleted_post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Not authorised to perform such operation")
+    deleted_query.delete(synchronize_session=False)
     db.commit()
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -60,6 +68,9 @@ def update_post(id: int, post: schema.PostCreate, db: Session = Depends(get_db),
     if query_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id:{id} does not exist")
+    if query_data.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Not authorised to perform such operation")
     post_query.update(post.model_dump())
     db.commit()
     return post_query.first()
